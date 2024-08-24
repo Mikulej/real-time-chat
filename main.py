@@ -4,43 +4,20 @@ from flask_socketio import join_room, leave_room, send, SocketIO
 import random
 from string import ascii_uppercase
 
-import psycopg2
-from config import configDatabase
-
-def connectToDataBase():
-    try:
-        connection = None
-        params = configDatabase()
-        print("Connecting to the postgreSQL database ...")
-        connection = psycopg2.connect(**params)
-
-        #create a cursor
-        cursor = connection.cursor()
-        print("PostgreSQL database version: ")
-        # cursor.execute('SELECT version()')
-        
-        cursor.execute('''CREATE TABLE IF NOT EXISTS weather (
-            city            varchar(80),
-            temp_lo         int,           -- low temperature
-            temp_hi         int,           -- high temperature
-            prcp            real,          -- precipitation
-            date            date
-        );''')
-        connection.commit() #commit changes
-        
-        # db_version = cursor.fetchone()
-        # print(db_version)
-        cursor.close()
-    except(Exception,psycopg2.DatabaseError) as error:
-        print(error)
-    finally:
-        if connection is not None:
-            connection.close()
-            print("Database connection terminated")
-
+from database import Database
 
 def main():
-    connectToDataBase()
+    db: Database = Database
+    Database.connect(db)
+    Database.execute(db,query=
+    '''CREATE TABLE IF NOT EXISTS weather (
+        city            varchar(80),
+        temp_lo         int,           -- low temperature
+        temp_hi         int,           -- high temperature
+        prcp            real,          -- precipitation
+        date            date
+    );''')
+    Database.disconnect(db)
     rooms = {}
     def generate_code(length):
         while True:
