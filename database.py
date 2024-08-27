@@ -4,11 +4,13 @@ from config import configDatabase
 class Database:
     def __init__(self):    
         self.connection = None
+        self.cursor = None
 
     def connect(self):
         try:
             params = configDatabase()
             self.connection = psycopg2.connect(**params)
+            self.cursor = self.connection.cursor()
             print("Succesfully connected to database.")
         except(Exception,psycopg2.DatabaseError) as error:
             print(error) 
@@ -23,9 +25,16 @@ class Database:
 
     def execute(self,query):
         try:
-            cursor = self.connection.cursor()
-            cursor.execute(query)
+            
+            self.cursor.execute(query)
             self.connection.commit()
         except(Exception,psycopg2.DatabaseError) as error:
             print(error) 
+
+    def fetchone(self):
+        try:
+            return self.cursor.fetchone()
+        except(Exception,psycopg2.DatabaseError) as error:
+            print(error) 
+
         

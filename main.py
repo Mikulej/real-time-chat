@@ -10,16 +10,22 @@ def main():
     app.config['SECRET_KEY'] = 'secret!'
     socketio = SocketIO(app)
 
-    db: Database = Database
-    Database.connect(db)
-    Database.execute(db,query=
-    '''CREATE TABLE IF NOT EXISTS messages (
-        code            varchar(4),
-        nick            varchar(20),           
-        message         varchar(100),                   
-        date            timestamp
+    db: Database = Database()
+    db.connect()
+    db.execute('''CREATE TABLE IF NOT EXISTS accounts (
+        username        varchar(10),
+        password        varchar(30),           
+        id              BIGSERIAL PRIMARY KEY
     );''')
-    Database.disconnect(db)
+
+    # Database.execute(db,query=
+    # '''CREATE TABLE IF NOT EXISTS messages (
+    #     code            varchar(4),
+    #     nick            varchar(20),           
+    #     message         varchar(100),                   
+    #     date            timestamp
+    # );''')
+    
 
     @app.route("/",methods=["POST","GET"])
     def index():
@@ -29,10 +35,19 @@ def main():
             login = request.form.get("login",False)
             register = request.form.get("register",False)
 
-            if login != False:
-                if len(username) > 10:
-                    return render_template("index.html", username=username,error="Username too long (Exceeded 10 characters)")
-                return render_template("index.html",error="Login ok")
+            if register != False:
+                if len(username) > 10 or len(username) < 4:
+                    return render_template("index.html", username=username,error="Invalid username length (username must be between 4 and 10 characters long)")
+                if len(password) > 30 or len(password) < 4:
+                    return render_template("index.html", username=username,error="Invalid password length (password must be between 4 and 30 characters long)")
+                
+                db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+                if db.fetchone() != None:
+                    return render_template("index.html", username=username,error="Username already taken")
+
+                db.execute("INSERT INTO accounts (username,password) VALUES (\'{0}\',\'{1}\')".format(username,password))
+
+                return render_template("index.html",error="Registration complete, please log in")
                 
             
             
@@ -43,8 +58,11 @@ def main():
 
             
         return render_template("index.html")
-
+    
+    
     socketio.run(app)
+    db.disconnect()
+    
 
 if __name__ == '__main__':
     main()
