@@ -1,121 +1,51 @@
-from flask import Flask
-from flask import Flask, render_template, request, session, redirect,url_for
-from flask_socketio import join_room, leave_room, send, SocketIO 
-import random
-from string import ascii_uppercase
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO
 
 from database import Database
 
+    
+
 def main():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = 'secret!'
+    socketio = SocketIO(app)
+
     db: Database = Database
     Database.connect(db)
     Database.execute(db,query=
-    '''CREATE TABLE IF NOT EXISTS weather (
-        city            varchar(80),
-        temp_lo         int,           -- low temperature
-        temp_hi         int,           -- high temperature
-        prcp            real,          -- precipitation
-        date            date
+    '''CREATE TABLE IF NOT EXISTS messages (
+        code            varchar(4),
+        nick            varchar(20),           
+        message         varchar(100),                   
+        date            timestamp
     );''')
     Database.disconnect(db)
-    rooms = {}
-    def generate_code(length):
-        while True:
-            code = ""
-            for _ in range(length):
-                code += random.choice(ascii_uppercase)
-            if code not in rooms:
-                break
-        return code
 
-    app = Flask(__name__)
-    app.secret_key = 'hetman'
-    socketio = SocketIO(app)
     @app.route("/",methods=["POST","GET"])
     def index():
-        session.clear()
         if request.method == "POST":
-            nick = request.form.get("nick")
-            code = request.form.get("code")
-            join = request.form.get("join", False)
-            create = request.form.get("create", False)
+            username = request.form.get("username",False)
+            password = request.form.get("password",False)
+            login = request.form.get("login",False)
+            register = request.form.get("register",False)
 
-            if not nick:
-                return render_template("index.html", error="Please enter a nickname", nick=nick, code=code)
+            if login != False:
+                if len(username) > 10:
+                    return render_template("index.html", username=username,error="Username too long (Exceeded 10 characters)")
+                return render_template("index.html",error="Login ok")
+                
             
-            if join != False and not code:
-                return render_template("index.html", error="Please enter a room code", nick=nick, code=code)
             
-            room = code
-            if create != False:
-                room = generate_code(4)
-                rooms[room] = {"members": 0, "messages": []}
-            elif code not in rooms:
-                return render_template("index.html", error="Room does not exist", nick=nick, code=code)
-            
-            session["room"] = room
-            session["nick"] = nick
-            return redirect(url_for("room"))
 
+            #if register != False and username == False or password == False:
+           
+
+
+            
         return render_template("index.html")
-    
 
-    @app.route("/room")
-    def room():
-        room = session.get("room")
-        if room is None or session.get("nick") is None or room not in rooms:
-            return redirect(url_for("index"))
-        return render_template("room.html", code=room, messages=rooms[room]["messages"])
-    
-    @socketio.on("new_message")
-    def message(data):
-        room = session.get("room")
-        if room not in rooms:
-            return
-        
-        content = {
-            "nick": session.get("nick"),
-            "message": data["data"]
-        }
-        send(content, to=room)
-        rooms[room]["messages"].append(content)
-        print(f"{session.get('nick')} said: {data['data']}")
-    
-    @socketio.on("connect")
-    def connect(auth):
-        room = session.get("room")
-        nick = session.get("nick")
-        if not room or not nick:
-            return
-        if room not in rooms:
-            leave_room(room)
-            return
-        
-        join_room(room)
-        send({"nick":nick,"message": "has entered the room"}, to=room)
-        rooms[room]["members"] += 1
-        print(f"{nick} has joined room {room}")
+    socketio.run(app)
 
-    @socketio.on("disconnect")
-    def disconnect():
-        room = session.get("room")
-        nick = session.get("nick")
-        leave_room(room)
-
-        if room in rooms:
-            rooms[room]["members"] -= 1
-            if rooms[room]["members"] <= 0:
-                del rooms[room]
-
-        send({"nick":nick,"message": "has left the room"}, to=room)
-        print(f"{nick} has left room {room}")
-    
-    #app.run()
-    socketio.run(app,debug=True)
-
-    
-    return
-
-if __name__ == "__main__":
-    
+if __name__ == '__main__':
     main()
+

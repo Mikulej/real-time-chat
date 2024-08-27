@@ -8,7 +8,7 @@ Thoughts:
 
 Steps:
 Connect to PostgreSQL DONE
-Store sent messages
+Store sent messages, table str code, str nick, str message, datetime date
 Display chat logs by fetchin data from database
 Save chat room for later, load it with messages from database, table of chat room with relation to table of messages?
 Build more web app features

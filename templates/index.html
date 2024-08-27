@@ -1,21 +1,29 @@
 {% extends 'base.html' %} {% block content %}
-<form method="post" class="menu">
-    <h2> Join the chat</h2>
-    <div>
-        <label>Nick:</label>
-        <input type="text" placeholder="John" name="nick" value="{{nick}}"/>
-    </div>
-    <div class="join">
-        <input type="text" placeholder="1234" name="code" value="{{code}}"/>
-        <button type="submit" name="join">Join a Room</button>
-    </div>
-    <div class="create">
-        <button type="submit" name="create" class="create-button">Create a Room</button>
-    </div>
+
+<div>
+    <h1>Real Time Chat</h1>
+    <form method="post">
+        <div>
+            <label>Username:</label>
+            <input type="text" name="username" value="{{username}}"/>
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="text" name="password" value="{{nick}}"/>
+        </div>
+        <div class="login">
+            <button type="submit" name="login" class="login-button">Login</button> 
+        </div>
+        <div class="register">
+            <button type="submit" name="register" class="register-button">Register</button> 
+        </div>
+    </form>
+    
+    
     {% if error %}
     <ul>
         <li>{{error}}</li>
     </ul>
     {% endif %}
-</form>
+</div>
 {% endblock %}
