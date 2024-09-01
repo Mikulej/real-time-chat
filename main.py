@@ -49,6 +49,22 @@ def main():
 
                 return render_template("index.html",error="Registration complete, please log in")
                 
+            if login != False and username != False and password != False:
+                if len(username) > 10 or len(username) < 4:
+                    return render_template("index.html", username=username,error="Wrong username or password")
+                if len(password) > 30 or len(password) < 4:
+                    return render_template("index.html", username=username,error="Wrong username or password")
+                
+                #check if username exsists          
+                db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+                row = db.fetchone() 
+                if row == None:
+                    return render_template("index.html", username=username,error="Wrong username or password")
+                #check if password is correct
+                if row[1] != password:
+                    return render_template("index.html", username=username,error="Wrong username or password")
+                
+            return render_template("home.html", username=username)
             
             
 

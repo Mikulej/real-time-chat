@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {% block content %}
+Logged as: {{username}}
+<form method="post">
+    Your chat rooms:
+    <!-- For each room add row
+    <ul>
+        <li></li>
+    </ul> -->
+    <div>
+        Add new room:
+    </div>
+
+    <div class="createRoom">
+        <button type="submit" name="createRoom" class="createRoomButton">Create Room</button> 
+    </div>
+    <div class="joinRoom">
+        <input type="text" name="roomCode" placeholder="Enter code"/>
+        <button type="submit" name="joinRoom" class="joinRoomButton">Join Room</button> 
+    </div>
+    <div>
+        
+    </div>
+</form>
+
+{% endblock %}

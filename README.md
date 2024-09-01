@@ -8,7 +8,7 @@ Thoughts:
 
 Steps:  
 Connect to PostgreSQL DONE  
-Make accounts, and store their info in database  
+Make accounts, and store their info in database DONE    
 Use account to create rooms and chat in there, store messages in databse  (message,user,date)  
 Load stored messages from a chat room  
 Build more web app features?  
