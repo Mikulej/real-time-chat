@@ -37,4 +37,10 @@ class Database:
         except(Exception,psycopg2.DatabaseError) as error:
             print(error) 
 
+    def fetchall(self):
+        try:
+            return self.cursor.fetchall()
+        except(Exception,psycopg2.DatabaseError) as error:
+            print(error) 
+
         

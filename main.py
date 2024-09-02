@@ -1,15 +1,17 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for,redirect, session
 from flask_socketio import SocketIO
 
 from database import Database
 
-    
+from random import random
+import string
 
 def main():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'secret!'
     socketio = SocketIO(app)
 
+    # Database Initilization ----------------------------
     db: Database = Database()
     db.connect()
     db.execute('''CREATE TABLE IF NOT EXISTS accounts (
@@ -18,17 +20,39 @@ def main():
         id              BIGSERIAL PRIMARY KEY
     );''')
 
-    # Database.execute(db,query=
-    # '''CREATE TABLE IF NOT EXISTS messages (
-    #     code            varchar(4),
-    #     nick            varchar(20),           
-    #     message         varchar(100),                   
-    #     date            timestamp
-    # );''')
-    
+    db.execute('''CREATE TABLE IF NOT EXISTS rooms (
+        id              BIGSERIAL PRIMARY KEY,
+        code            varchar(4)      
+    );''')
+
+    db.execute('''CREATE TABLE IF NOT EXISTS members (
+        user_id         BIGSERIAL,
+        room_id         BIGSERIAL,
+        role            INT,
+        CONSTRAINT fk_user         
+            FOREIGN KEY(user_id) 
+               REFERENCES accounts(id),
+        CONSTRAINT fk_room         
+            FOREIGN KEY(room_id) 
+               REFERENCES rooms(id)           
+    );''')
+
+    db.execute('''CREATE TABLE IF NOT EXISTS messages (
+        user_id         BIGSERIAL,
+        text            varchar(30),           
+        date            timestamp,
+        CONSTRAINT fk_user         
+            FOREIGN KEY(user_id) 
+               REFERENCES accounts(id)
+    );''')
+
+    # Flask route ----------------------------
 
     @app.route("/",methods=["POST","GET"])
     def index():
+        session.clear()
+
+        session["username"] = None
         if request.method == "POST":
             username = request.form.get("username",False)
             password = request.form.get("password",False)
@@ -64,16 +88,35 @@ def main():
                 if row[1] != password:
                     return render_template("index.html", username=username,error="Wrong username or password")
                 
-            return render_template("home.html", username=username)
-            
+            #return render_template("home.html", username=username)
+            session["username"] = username
+            return redirect("/home")
             
 
             #if register != False and username == False or password == False:
-           
-
-
-            
         return render_template("index.html")
+    
+    def generate_code(length: int) -> string:
+        return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
+        
+    @app.route("/home",methods=["POST","GET"])
+    def home():
+        username = session["username"]
+        if username == None :
+            return redirect("/")
+        createRoom = request.form.get("createRoom",False)
+        joinRoom = request.form.get("register",False)
+        roomCode = request.form.get("roomCode",False)
+        #get rooms
+        # db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+        # rooms = db.fetchall() 
+        
+        if createRoom != False:
+            code = generate_code(4)
+            db.execute("INSERT INTO rooms (code) VALUES (\'{0}\')".format(code))
+            return render_template("home.html", username=session["username"])
+        return render_template("home.html", username=session["username"])
+    
     
     
     socketio.run(app)
