@@ -3,7 +3,7 @@ from flask_socketio import SocketIO
 
 from database import Database
 
-from random import random
+import random
 import string
 
 def main():
@@ -108,12 +108,34 @@ def main():
         joinRoom = request.form.get("register",False)
         roomCode = request.form.get("roomCode",False)
         #get rooms
-        # db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
-        # rooms = db.fetchall() 
+        db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+        user = db.fetchone() 
+        user_id = user[0]
+        db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
+        user_rooms_raw = db.fetchall() 
+        #TO DO: return list of rooms
         
         if createRoom != False:
-            code = generate_code(4)
+            #check if room with that code exsists
+            generateNewCode = True
+            while generateNewCode:
+                code = generate_code(4)
+                db.execute("SELECT * FROM rooms WHERE code=\'{0}\';".format(code))
+                row = db.fetchone() 
+                if row == None:
+                    generateNewCode = False
             db.execute("INSERT INTO rooms (code) VALUES (\'{0}\')".format(code))
+            #get id of new room     
+            db.execute("SELECT * FROM rooms WHERE code=\'{0}\';".format(code))
+            row = db.fetchone() 
+            room_id = row[0]
+            #get id of user
+            db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+            row = db.fetchone() 
+            user_id = row[2]
+            #add account that created a room as a member of that room
+            db.execute("INSERT INTO members (user_id,room_id,role) VALUES (\'{0}\',\'{1}\',\'{2}\')".format(user_id,room_id,3))
+
             return render_template("home.html", username=session["username"])
         return render_template("home.html", username=session["username"])
     
