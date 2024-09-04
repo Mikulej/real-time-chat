@@ -2,14 +2,16 @@
 Logged as: {{username}}
 <form method="post">
     Your chat rooms:
-    <!-- 
+    {% if rooms is not none %} 
     <ul>
-        <li></li>
+        {% for room in rooms %}
+        <li>{{room[2]}}
+           <button type="submit" name="availableRoom" class="availableRoom" value="{{room[2]}}">Enter</button>
+        </li>
+        {% endfor %}
     </ul>
-    <div>
-        Add new room:
-    </div> -->
-
+    {% endif %}
+    Add more rooms:
     <div class="createRoom">
         <button type="submit" name="createRoom" class="createRoomButton">Create Room</button> 
     </div>
@@ -21,5 +23,9 @@ Logged as: {{username}}
         
     </div>
 </form>
-
+<script>
+    function goToRoom(code) {
+     print("goToRoom")
+    }
+</script>
 {% endblock %}

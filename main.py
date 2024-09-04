@@ -107,13 +107,18 @@ def main():
         createRoom = request.form.get("createRoom",False)
         joinRoom = request.form.get("register",False)
         roomCode = request.form.get("roomCode",False)
+        availableRoom = request.form.get("availableRoom",False)
+
+        #if selected a room, go to that room
+        if availableRoom != False:
+            session["roomCode"] = availableRoom
+            return redirect(url_for("room",code=availableRoom))
         #get rooms
         db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
         user = db.fetchone() 
-        user_id = user[0]
+        user_id = user[2]
         db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
         user_rooms_raw = db.fetchall() 
-        #TO DO: return list of rooms
         
         if createRoom != False:
             #check if room with that code exsists
@@ -136,10 +141,20 @@ def main():
             #add account that created a room as a member of that room
             db.execute("INSERT INTO members (user_id,room_id,role) VALUES (\'{0}\',\'{1}\',\'{2}\')".format(user_id,room_id,3))
 
-            return render_template("home.html", username=session["username"])
-        return render_template("home.html", username=session["username"])
+            return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
+        return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
     
-    
+    @app.route("/room/<code>",methods=["POST","GET"])
+    def room(code):
+        username = session["username"]
+        roomCode = session["roomCode"]
+        if username == None or roomCode == None:
+            return redirect("/")
+        #TO DO: check if room with that code exsists
+        #TO DO: check if user has access to the room
+        #TO DO: start session using socketio
+        print("Code of the room is=", code)
+        return render_template("room.html")
     
     socketio.run(app)
     db.disconnect()
