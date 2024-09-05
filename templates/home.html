@@ -20,9 +20,15 @@ Logged as: {{username}}
         <button type="submit" name="joinRoom" class="joinRoomButton">Join Room</button> 
     </div>
     <div>
-        
+        {% if error %}
+    <ul>
+        <li>{{error}}</li>
+    </ul>
+        {% endif %}
     </div>
+
 </form>
+
 <script>
     function goToRoom(code) {
      print("goToRoom")

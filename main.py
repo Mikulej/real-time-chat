@@ -104,7 +104,7 @@ def main():
         if username == None :
             return redirect("/")
         createRoom = request.form.get("createRoom",False)
-        joinRoom = request.form.get("register",False)
+        joinRoom = request.form.get("joinRoom",False)
         roomCode = request.form.get("roomCode",False)
         availableRoom = request.form.get("availableRoom",False)
 
@@ -118,6 +118,22 @@ def main():
         user_id = user[2]
         db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
         user_rooms_raw = db.fetchall() 
+
+        if joinRoom != False:
+            if roomCode == "":
+                return render_template("home.html", username=session["username"],rooms=user_rooms_raw, error="Enter the code of the room")
+            db.execute("SELECT * FROM rooms WHERE code=\'{0}\';".format(roomCode))
+            row = db.fetchone() 
+            if row == None:
+                return render_template("home.html", username=session["username"],rooms=user_rooms_raw, error="Room '\'{0}'\' does not exsists".format(roomCode))
+            #check if this user is already a member of this room
+            room_id = row[0]
+            db.execute("SELECT * FROM members WHERE user_id=\'{0}\' AND room_id=\'{1}\';".format(user_id,room_id))
+            row = db.fetchone() 
+            if row != None:
+                return render_template("home.html", username=session["username"],rooms=user_rooms_raw, error="You are already a member of room '\'{0}'\'".format(roomCode))
+            #add user as a member to that room    
+            db.execute("INSERT INTO members (user_id,room_id,role) VALUES (\'{0}\',\'{1}\',\'{2}\')".format(user_id,room_id,0))
         
         if createRoom != False:
             #check if room with that code exsists
