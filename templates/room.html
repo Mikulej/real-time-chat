@@ -1,19 +1,32 @@
 {% extends 'base.html' %} {% block content %}
 <h1>Room with code: {{code}}</h1>
-<form method="post">
     
     <!-- For each msg add row
     <ul>
         <li></li>
     </ul> -->
 
-    <div class="">
-        <input type="text" name="text"/>
-        <button type="submit" name="send" class="sendButton">Send</button> 
-    </div>
-    <div>
-        
-    </div>
-</form>
+<div class="">
+    <input type="text" name="text" id="textbox"/>
+    <button type="submit" name="send" class="sendButton" onclick="sendMessage()">Send</button> 
+</div>
+<div>
+    
+</div>
+<script type="text/javascript" charset="utf-8">
+    var socket = io();
+    socket.on('connect', function() {
 
+    });
+    function sendMessage() {    
+        message = document.getElementById("textbox").value;
+        username = "{{username}}";
+        //socket.emit('sendMessage', {message: message, username:username});
+        //socket.emit('sendMessage', {'message': , username:username});
+
+        // socket.emit('sendMessage', {data:[user,message]});
+        socket.emit('sendMessage', {username:username,message:message});
+        console.log('sendMessage');
+    }
+</script>
 {% endblock %}

@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, url_for,redirect, session
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
 
 from database import Database
 
@@ -51,7 +51,6 @@ def main():
     @app.route("/",methods=["POST","GET"])
     def index():
         session.clear()
-
         session["username"] = None
         if request.method == "POST":
             username = request.form.get("username",False)
@@ -150,12 +149,37 @@ def main():
         roomCode = session["roomCode"]
         if username == None or roomCode == None:
             return redirect("/")
+        
         #TO DO: check if room with that code exsists
         #TO DO: check if user has access to the room
         #TO DO: start session using socketio
-        print("Code of the room is=", code)
-        return render_template("room.html")
+        return render_template("room.html",code=code,username=username)
     
+    # Flask socketio ----------------------------
+    @socketio.on("connect")
+    def connect(auth):
+        username = session.get("username")
+        code = session.get("roomCode")
+        join_room(code)
+        #print("User with session ID: ", request.sid, "joined")
+        print("{0} joined room: {1}".format(username,code))
+
+    @socketio.on('disconnect')
+    def disconnect():
+        username = session.get("username")
+        code = session.get("roomCode")
+        leave_room(code)
+        print("{0} disconnected".format(username))
+
+    @socketio.on('sendMessage')
+    def sendMessage(data):
+        #print("data=",data)
+        #username = session.get("username")
+        print("User ", data["username"], "sent message: \'", data["message"],"'\'")
+        #TO DO: get timestamp
+        #socketio.send(data=[data["username"], data["message"]])
+
+
     socketio.run(app)
     db.disconnect()
     
