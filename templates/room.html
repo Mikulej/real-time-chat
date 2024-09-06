@@ -1,10 +1,11 @@
 {% extends 'base.html' %} {% block content %}
 <h1>Room with code: {{code}}</h1>
     
-    <!-- For each msg add row
+    {% for msg in messages %}
     <ul>
-        <li></li>
-    </ul> -->
+        <li>{{msg[0]}} wrote: {{msg[1]}} at {{msg[2]}}</li>
+    </ul> 
+    {% endfor %}
 
 <div class="">
     <input type="text" name="text" id="textbox"/>
@@ -21,12 +22,14 @@
     function sendMessage() {    
         message = document.getElementById("textbox").value;
         username = "{{username}}";
-        //socket.emit('sendMessage', {message: message, username:username});
-        //socket.emit('sendMessage', {'message': , username:username});
-
-        // socket.emit('sendMessage', {data:[user,message]});
+        
         socket.emit('sendMessage', {username:username,message:message});
         console.log('sendMessage');
     }
+    socket.on("message", (data) => {
+        //upon receiving message - update displayed messages
+        //socket.emit('updateMessages');
+        console.log('receivedMessage');
+    })
 </script>
 {% endblock %}

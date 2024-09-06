@@ -5,6 +5,7 @@ from database import Database
 
 import random
 import string
+import datetime
 
 def main():
     app = Flask(__name__)
@@ -39,11 +40,15 @@ def main():
 
     db.execute('''CREATE TABLE IF NOT EXISTS messages (
         user_id         BIGSERIAL,
-        text            varchar(30),           
+        room_id         BIGSERIAL,
+        text            varchar(100),           
         date            timestamp,
         CONSTRAINT fk_user         
             FOREIGN KEY(user_id) 
-               REFERENCES accounts(id)
+               REFERENCES accounts(id),
+        CONSTRAINT fk_room         
+            FOREIGN KEY(room_id) 
+               REFERENCES rooms(id)      
     );''')
 
     # Flask route ----------------------------
@@ -86,13 +91,13 @@ def main():
                 #check if password is correct
                 if row[1] != password:
                     return render_template("index.html", username=username,error="Wrong username or password")
+                #store user_id in session
+                session["user_id"] = row[2]
                 
-            #return render_template("home.html", username=username)
             session["username"] = username
-            return redirect("/home")
             
+            return redirect("/home")
 
-            #if register != False and username == False or password == False:
         return render_template("index.html")
     
     def generate_code(length: int) -> string:
@@ -111,6 +116,10 @@ def main():
         #if selected a room, go to that room
         if availableRoom != False:
             session["roomCode"] = availableRoom
+            #store room_id in session
+            db.execute("SELECT * FROM rooms WHERE code=\'{0}\';".format(availableRoom))
+            row = db.fetchone() 
+            session["room_id"] = row[0]
             return redirect(url_for("room",code=availableRoom))
         #get rooms
         db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
@@ -165,11 +174,12 @@ def main():
         roomCode = session["roomCode"]
         if username == None or roomCode == None:
             return redirect("/")
-        
         #TO DO: check if room with that code exsists
         #TO DO: check if user has access to the room
-        #TO DO: start session using socketio
-        return render_template("room.html",code=code,username=username)
+        db.execute("SELECT * FROM (SELECT accounts.username,messages.text,messages.date FROM messages JOIN accounts ON messages.user_id=accounts.id WHERE room_id={0} ORDER BY date DESC LIMIT {1}) ORDER BY date ASC;".format(session.get("room_id"),10))
+        messages = db.fetchall()
+        
+        return render_template("room.html",code=code,username=username,messages=messages)
     
     # Flask socketio ----------------------------
     @socketio.on("connect")
@@ -189,12 +199,21 @@ def main():
 
     @socketio.on('sendMessage')
     def sendMessage(data):
+        code = session.get("roomCode")
         #print("data=",data)
         #username = session.get("username")
         print("User ", data["username"], "sent message: \'", data["message"],"'\'")
-        #TO DO: get timestamp
-        #socketio.send(data=[data["username"], data["message"]])
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.execute("INSERT INTO messages (user_id,room_id,text,date) VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\')".format(session.get("user_id"),
+                                                                                                                      session.get("room_id"),
+                                                                                                                      data["message"],
+                                                                                                                      current_time))
+        socketio.send(data=data["message"],to=code)
 
+    # @socketio.on('updateMessages')
+    # def updateMessages(data):
+    #     username = session.get("username")
+    #     print("User ", username, "got message: \'", data,"'\'")
 
     socketio.run(app)
     db.disconnect()
