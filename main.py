@@ -121,10 +121,12 @@ def main():
             row = db.fetchone() 
             session["room_id"] = row[0]
             return redirect(url_for("room",code=availableRoom))
-        #get rooms
+        
+        #get user_id
         db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
         user = db.fetchone() 
         user_id = user[2]
+        #get rooms
         db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
         user_rooms_raw = db.fetchall() 
 
@@ -158,19 +160,12 @@ def main():
             db.execute("SELECT * FROM rooms WHERE code=\'{0}\';".format(code))
             row = db.fetchone() 
             room_id = row[0]
-            #get id of user
-            db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
-            row = db.fetchone() 
-            user_id = row[2]
             #add account that created a room as a member of that room
             db.execute("INSERT INTO members (user_id,room_id,role) VALUES (\'{0}\',\'{1}\',\'{2}\')".format(user_id,room_id,3))
-            #get rooms
-            db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
-            user = db.fetchone() 
-            user_id = user[2]
-            db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
-            user_rooms_raw = db.fetchall() 
-            return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
+            
+        #get rooms 
+        db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
+        user_rooms_raw = db.fetchall() 
         return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
     
     @app.route("/room/<code>",methods=["POST","GET"])

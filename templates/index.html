@@ -18,12 +18,10 @@
             <button type="submit" name="register" class="register-button">Register</button> 
         </div>
     </form>
-    
-    
-    {% if error %}
+</div>
+{% if error %}
     <ul>
         <li>{{error}}</li>
     </ul>
-    {% endif %}
-</div>
+{% endif %}
 {% endblock %}
