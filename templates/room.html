@@ -1,19 +1,22 @@
 {% extends 'base.html' %} {% block content %}
 <h1>Room with code: {{code}}</h1>
     
-    {% for msg in messages %}
-    <ul>
-        <li>{{msg[0]}} wrote: {{msg[1]}} at {{msg[2]}}</li>
-    </ul> 
-    {% endfor %}
+<div class="chatlogs" style="overflow-y: scroll; height:400px; width: 30%;">
 
+    <ul id="savedMessages">
+        {% for msg in messages %}
+        <li>{{msg[0]}} wrote: {{msg[1]}} at {{msg[2]}}</li>
+        {% endfor %}
+        <span id="liveMessages">
+
+        </span>
+    </ul> 
+</div>
 <div class="">
     <input type="text" name="text" id="textbox"/>
     <button type="submit" name="send" class="sendButton" onclick="sendMessage()">Send</button> 
 </div>
-<div>
-    
-</div>
+
 <script type="text/javascript" charset="utf-8">
     var socket = io();
     socket.on('connect', function() {
@@ -24,12 +27,10 @@
         username = "{{username}}";
         
         socket.emit('sendMessage', {username:username,message:message});
-        console.log('sendMessage');
+        message = document.getElementById("textbox").value = "";
     }
     socket.on("message", (data) => {
-        //upon receiving message - update displayed messages
-        //socket.emit('updateMessages');
-        console.log('receivedMessage');
+        document.getElementById("liveMessages").innerHTML += "<li>" + data["username"] + " wrote: " + data["message"]+ " at " + data["datetime"] +"</li>";
     })
 </script>
 {% endblock %}

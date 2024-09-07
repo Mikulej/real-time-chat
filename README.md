@@ -11,5 +11,7 @@ Connect to PostgreSQL DONE
 Make accounts, and store their info in database DONE    
 Use account to create rooms and chat in there, store messages in database (user,message,date) DONE   
 Load stored messages from a chat room  DONE  
-Live loading messages  
+Live loading messages  DONE
+Admin Panel?
+Switch to light/darkmode?
 Build more web app features?  

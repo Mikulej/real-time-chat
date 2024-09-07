@@ -102,7 +102,7 @@ def main():
     
     def generate_code(length: int) -> string:
         return ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
-        
+    
     @app.route("/home",methods=["POST","GET"])
     def home():
         username = session["username"]
@@ -164,7 +164,12 @@ def main():
             user_id = row[2]
             #add account that created a room as a member of that room
             db.execute("INSERT INTO members (user_id,room_id,role) VALUES (\'{0}\',\'{1}\',\'{2}\')".format(user_id,room_id,3))
-
+            #get rooms
+            db.execute("SELECT * FROM accounts WHERE username=\'{0}\';".format(username))
+            user = db.fetchone() 
+            user_id = user[2]
+            db.execute("SELECT user_id,room_id,code FROM members JOIN rooms ON id= room_id WHERE user_id=\'{0}\';".format(user_id))
+            user_rooms_raw = db.fetchall() 
             return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
         return render_template("home.html", username=session["username"],rooms=user_rooms_raw)
     
@@ -174,8 +179,7 @@ def main():
         roomCode = session["roomCode"]
         if username == None or roomCode == None:
             return redirect("/")
-        #TO DO: check if room with that code exsists
-        #TO DO: check if user has access to the room
+
         db.execute("SELECT * FROM (SELECT accounts.username,messages.text,messages.date FROM messages JOIN accounts ON messages.user_id=accounts.id WHERE room_id={0} ORDER BY date DESC LIMIT {1}) ORDER BY date ASC;".format(session.get("room_id"),10))
         messages = db.fetchall()
         
@@ -187,33 +191,25 @@ def main():
         username = session.get("username")
         code = session.get("roomCode")
         join_room(code)
-        #print("User with session ID: ", request.sid, "joined")
-        print("{0} joined room: {1}".format(username,code))
 
     @socketio.on('disconnect')
     def disconnect():
         username = session.get("username")
         code = session.get("roomCode")
         leave_room(code)
-        print("{0} disconnected".format(username))
+
 
     @socketio.on('sendMessage')
     def sendMessage(data):
         code = session.get("roomCode")
-        #print("data=",data)
-        #username = session.get("username")
-        print("User ", data["username"], "sent message: \'", data["message"],"'\'")
+
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.execute("INSERT INTO messages (user_id,room_id,text,date) VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\')".format(session.get("user_id"),
                                                                                                                       session.get("room_id"),
                                                                                                                       data["message"],
                                                                                                                       current_time))
-        socketio.send(data=data["message"],to=code)
-
-    # @socketio.on('updateMessages')
-    # def updateMessages(data):
-    #     username = session.get("username")
-    #     print("User ", username, "got message: \'", data,"'\'")
+        data["datetime"] = current_time
+        socketio.send(data=data,to=code)
 
     socketio.run(app)
     db.disconnect()
